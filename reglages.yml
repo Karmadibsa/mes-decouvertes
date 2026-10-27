@@ -1,0 +1,112 @@
+# Mes découvertes — le seul fichier à modifier.
+# Chaque nuit, le générateur choisit des articles selon ces réglages
+# et les dépose dans le dépôt privé, où la Kobo vient les chercher.
+
+articles_par_jour: 15        # articles en français (les thèmes à « nombre » s'ajoutent)
+duree_min: 2                 # minutes de lecture (≈ 230 mots/minute)
+duree_max: 9
+garder_jours: 5              # les articles plus anciens sont retirés du catalogue
+
+# Un article est écarté si son titre, son adresse, son auteur ou son texte contient l'un de ces mots.
+exclure: [sponsorisé, sponsorisée, en partenariat avec, publi-rédactionnel, partenariats, code promo,
+          bon plan, bons plans, black friday, kamasutra, horoscope]
+
+# Thèmes : « part » = pourcentage des articles en français, ou « nombre » = quantité fixe.
+# Sources possibles :
+#   rss            : un flux ; « mots_cles » (facultatif) ne garde que les articles qui en parlent
+#   wikipedia      : des catégories Wikipédia (« langue: simple » = anglais simplifié)
+#   wikipedia_qualite : un bon article ou un article de qualité au hasard
+#   wikipedia_anecdote : une anecdote « Le saviez-vous ? » et l'article qui va avec
+
+themes:
+  - nom: Sport et trail
+    part: 30
+    sources:
+      - type: wikipedia
+        categories: [Entraînement sportif, Course à pied, Trail, Musculation, Médecine du sport]
+      - type: rss
+        nom: The Conversation
+        url: https://theconversation.com/fr/sante/articles.atom
+        licence: CC BY-ND 4.0
+        mots_cles: &sport [sport, sportif, sportive, entraînement, course à pied, coureur, marathon, trail, muscle, musculaire, endurance, activité physique, exercice physique, athlète, récupération, blessure, vo2]
+      - type: rss
+        nom: Inserm
+        url: https://www.inserm.fr/actualite/feed
+        mots_cles: *sport
+      - type: rss
+        nom: Futura
+        url: https://www.futura-sciences.com/rss/sante/actualites.xml
+        mots_cles: *sport
+
+  - nom: Physiologie et nutrition
+    part: 20
+    sources:
+      - type: wikipedia
+        categories: [Nutrition, Nutriment, Physiologie humaine, Métabolisme]
+      - type: rss
+        nom: Futura
+        url: https://www.futura-sciences.com/rss/sante/definitions.xml
+      - type: rss
+        nom: Inserm
+        url: https://www.inserm.fr/dossier/feed
+      - type: rss
+        nom: The Conversation
+        url: https://theconversation.com/fr/sante/articles.atom
+        licence: CC BY-ND 4.0
+        mots_cles: [nutrition, alimentation, aliment, protéine, glucide, lipide, vitamine, métabolisme, sommeil, hormone, cœur, digestion, microbiote, hydratation]
+
+  - nom: Psychologie et neurosciences
+    part: 15
+    sources:
+      - type: wikipedia
+        categories: [Biais cognitif, Psychologie cognitive, Motivation, Apprentissage, Mémoire]
+      - type: rss
+        nom: The Conversation
+        url: https://theconversation.com/fr/sante/articles.atom
+        licence: CC BY-ND 4.0
+        mots_cles: &psy [cerveau, psycholog, neuro, motivation, mémoire, apprentissage, émotion, stress, habitude, attention, concentration, cognitif]
+
+  - nom: Sciences
+    part: 10
+    sources:
+      - type: rss
+        nom: Futura
+        url: https://www.futura-sciences.com/rss/questions-reponses.xml
+      - type: rss
+        nom: Futura
+        url: https://www.futura-sciences.com/rss/definitions.xml
+      - type: rss
+        nom: CNRS Le journal
+        url: https://lejournal.cnrs.fr/rss
+
+  - nom: Tech et IA
+    part: 10
+    sources:
+      - type: wikipedia
+        categories: [Histoire de l'informatique, Apprentissage automatique]
+      - type: rss
+        nom: The Conversation
+        url: https://theconversation.com/fr/technologie/articles.atom
+        licence: CC BY-ND 4.0
+      - type: rss
+        nom: Next
+        url: https://next.ink/feed/
+      - type: rss
+        nom: Korben
+        url: https://korben.info/feed
+      - type: rss
+        nom: Numerama
+        url: https://www.numerama.com/feed/
+
+  - nom: Curiosités
+    part: 15
+    sources:
+      - type: wikipedia_anecdote
+      - type: wikipedia_qualite
+
+  - nom: English
+    nombre: 3
+    sources:
+      - type: wikipedia
+        langue: simple
+        categories: [Sports, Running, Human body, Muscular system, Nutrition, Brain, Psychology, Science, Computing, Inventions]
