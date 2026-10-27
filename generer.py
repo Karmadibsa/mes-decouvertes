@@ -188,6 +188,9 @@ def candidats_rss(src, theme, regl):
             if e.get(champ):
                 date = dt.date(*e[champ][:3]).isoformat()
                 break
+        fraicheur = regl.get("fraicheur_jours")
+        if fraicheur and (not date or date < (dt.date.today() - dt.timedelta(days=fraicheur)).isoformat()):
+            continue
         auteur = e.get("author", "")
         sortie.append(Article(
             titre=titre, url=url, cle=url_canonique(url), source=src.get("nom") or flux.feed.get("title", "Web"),
@@ -336,6 +339,22 @@ def quotas(regl):
     return q
 
 
+def calculer_mots(regl):
+    regl["mots_min"] = regl["duree_min"] * MOTS_PAR_MINUTE
+    regl["mots_max"] = regl["mots_max_rss"] = regl["duree_max"] * MOTS_PAR_MINUTE
+    regl["mots_cible_wiki"] = (regl["duree_min"] + regl["duree_max"]) // 2 * MOTS_PAR_MINUTE
+    return regl
+
+
+def reglages_du_theme(regl, conf):
+    """Un thème peut avoir sa propre durée de lecture et sa propre fraîcheur (ex. l'actualité)."""
+    regl_t = dict(regl)
+    for cle in ("duree_min", "duree_max", "fraicheur_jours"):
+        if cle in conf:
+            regl_t[cle] = conf[cle]
+    return calculer_mots(regl_t)
+
+
 def selectionner(regl, deja_vus):
     choisis, titres_vus = [], set()
     cache_flux = {}
@@ -343,15 +362,17 @@ def selectionner(regl, deja_vus):
         if quota <= 0:
             continue
         conf = next(t for t in regl["themes"] if t["nom"] == theme)
+        regl_t = reglages_du_theme(regl, conf)
         log.info("Thème %s : %d article(s)", theme, quota)
         # un tas de candidats par source, puis tirage en alternant les sources
         tas = []
         for src in conf["sources"]:
             collecte, _ = COLLECTEURS[src["type"]]
-            cle_cache = (src["type"], src.get("url"), json.dumps(src.get("mots_cles", [])), json.dumps(src.get("categories", [])))
+            cle_cache = (src["type"], src.get("url"), json.dumps(src.get("mots_cles", [])),
+                         json.dumps(src.get("categories", [])), regl_t.get("fraicheur_jours"))
             try:
                 if cle_cache not in cache_flux:
-                    cache_flux[cle_cache] = collecte(src, theme, regl)
+                    cache_flux[cle_cache] = collecte(src, theme, regl_t)
                 candidats = [Article(c, theme=theme) for c in cache_flux[cle_cache]]
             except Exception as err:  # noqa: BLE001
                 log.warning("  source en échec (%s) : %s", src.get("url") or src["type"], err)
@@ -375,7 +396,7 @@ def selectionner(regl, deja_vus):
                 if a["cle"] in titres_vus or tn in titres_vus:
                     continue
                 try:
-                    a = COLLECTEURS[type_src][1](a, regl)
+                    a = COLLECTEURS[type_src][1](a, regl_t)
                     time.sleep(0.3)
                 except Exception as err:  # noqa: BLE001
                     log.info("  échec %s : %s", a["url"], err)
@@ -533,10 +554,7 @@ def main():
     logging.basicConfig(level=os.environ.get("DECOUVERTES_LOG", "INFO"), format="%(message)s")
 
     regl = yaml.safe_load(args.reglages.read_text(encoding="utf-8"))
-    regl["mots_min"] = regl["duree_min"] * MOTS_PAR_MINUTE
-    regl["mots_max"] = regl["duree_max"] * MOTS_PAR_MINUTE
-    regl["mots_max_rss"] = regl["mots_max"]
-    regl["mots_cible_wiki"] = (regl["duree_min"] + regl["duree_max"]) // 2 * MOTS_PAR_MINUTE
+    calculer_mots(regl)
 
     sortie = args.sortie
     (sortie / "articles").mkdir(parents=True, exist_ok=True)

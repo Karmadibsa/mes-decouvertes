@@ -17,6 +17,7 @@ exclure: [sponsorisé, sponsorisée, en partenariat avec, publi-rédactionnel, p
 #   wikipedia      : des catégories Wikipédia (« langue: simple » = anglais simplifié)
 #   wikipedia_qualite : un bon article ou un article de qualité au hasard
 #   wikipedia_anecdote : une anecdote « Le saviez-vous ? » et l'article qui va avec
+# Un thème peut aussi avoir ses propres « duree_min », « duree_max » et « fraicheur_jours ».
 
 themes:
   - nom: Sport et trail
@@ -103,6 +104,28 @@ themes:
     sources:
       - type: wikipedia_anecdote
       - type: wikipedia_qualite
+
+  - nom: Actualités
+    nombre: 5
+    duree_min: 1
+    duree_max: 7
+    fraicheur_jours: 2         # seulement les articles des 2 derniers jours
+    sources:
+      - type: rss
+        nom: franceinfo
+        url: https://www.francetvinfo.fr/titres.rss
+      - type: rss
+        nom: RFI
+        url: https://www.rfi.fr/fr/rss
+      - type: rss
+        nom: France 24
+        url: https://www.france24.com/fr/rss
+      - type: rss
+        nom: La Croix
+        url: https://www.la-croix.com/RSS/UNIVERS
+      - type: rss
+        nom: 20 Minutes
+        url: https://www.20minutes.fr/feeds/rss-une.xml
 
   - nom: English
     nombre: 3
