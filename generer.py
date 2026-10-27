@@ -81,6 +81,21 @@ def titre_normalise(titre):
     return re.sub(r"[^a-z0-9]+", " ", t.encode("ascii", "ignore").decode()).strip()
 
 
+MOTS_VIDES = set("""les des une pour dans avec sur par aux que qui est son ses ces leur leurs pas plus mais
+vers sont ont été fait faire comme tout tous entre après avant sans sous chez this that with from have will the and
+for are was dont elle ils""".split())
+
+
+def mots_du_titre(titre):
+    return {m for m in titre_normalise(titre).split() if len(m) >= 3 and m not in MOTS_VIDES}
+
+
+def meme_sujet(mots_a, mots_b):
+    """Deux titres qui partagent l'essentiel de leurs mots parlent du même sujet."""
+    communs = len(mots_a & mots_b)
+    return communs >= 3 and communs >= 0.5 * min(len(mots_a), len(mots_b))
+
+
 def slug(texte, n=50):
     return titre_normalise(texte).replace(" ", "-")[:n].strip("-") or "article"
 
@@ -356,7 +371,7 @@ def reglages_du_theme(regl, conf):
 
 
 def selectionner(regl, deja_vus):
-    choisis, titres_vus = [], set()
+    choisis, titres_vus, sujets = [], set(), []
     cache_flux = {}
     for theme, quota in quotas(regl).items():
         if quota <= 0:
@@ -393,7 +408,8 @@ def selectionner(regl, deja_vus):
                 a = candidats.pop(0)
                 essais += 1
                 tn = titre_normalise(a["titre"])
-                if a["cle"] in titres_vus or tn in titres_vus:
+                mots = mots_du_titre(a["titre"])
+                if a["cle"] in titres_vus or tn in titres_vus or any(meme_sujet(mots, s) for s in sujets):
                     continue
                 try:
                     a = COLLECTEURS[type_src][1](a, regl_t)
@@ -403,6 +419,7 @@ def selectionner(regl, deja_vus):
                     a = None
                 if a:
                     titres_vus.update({a["cle"], tn})
+                    sujets.append(mots_du_titre(a["titre"]))
                     choisis.append(a)
                     pris += 1
                     log.info("  + %s (%s, %d mots)", a["titre"], a["source"], nb_mots(a["corps"]))
@@ -509,6 +526,9 @@ def ecrire_epub(a, chemin):
 # ------------------------------------------------------------------ OPDS
 
 def ecrire_opds(catalogue, url_base, chemin):
+    """L'« auteur » OPDS est le thème : KOReader nomme le fichier « auteur - titre »,
+    donc les articles se regroupent par thème dans le dossier (tri par nom).
+    L'EPUB lui-même garde la vraie source comme auteur."""
     e = html.escape
     maintenant = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     entrees = []
@@ -518,7 +538,7 @@ def ecrire_opds(catalogue, url_base, chemin):
 <title>{e(c["titre"])}</title>
 <id>urn:uuid:{c["id"]}</id>
 <updated>{c["jour"]}T05:00:00Z</updated>
-<author><name>{e(c["source"])}</name></author>
+<author><name>{e(c["theme"])}</name></author>
 <dc:language>{c["langue"]}</dc:language>
 <summary>{e(c["theme"])} · {c["minutes"]} min — {e(c["source"])}</summary>
 <link rel="http://opds-spec.org/acquisition" href="{e(href)}" type="application/epub+zip"/>
