@@ -6,20 +6,72 @@
   - À la main : bouton « Synchroniser mes découvertes » en tête du menu « + » de la bibliothèque,
     ou action du même nom pour un geste ou un profil.
 Seuls les catalogues OPDS marqués « synchroniser » sont concernés ; les articles arrivent
-dans leur dossier de synchronisation. ]]
+dans leur dossier de synchronisation.
+Avant chaque synchronisation, ce dossier est nettoyé : les articles lus (après la journée de
+lecture) et les articles non lus depuis plus de 5 jours sont supprimés. Sont toujours gardés :
+un article surligné, annoté, avec marque-page, dans les favoris ou une collection, ouvert à l'écran. ]]
 
+local DocSettings = require("docsettings")
 local Dispatcher = require("dispatcher")
 local FileManager = require("apps/filemanager/filemanager")
 local InfoMessage = require("ui/widget/infomessage")
 local NetworkMgr = require("ui/network/manager")
+local ReadCollection = require("readcollection")
 local ReaderUI = require("apps/reader/readerui")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
+local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 
 local AUTO_HEURE = 5           -- pas de synchronisation automatique avant 5 h
 local AUTO_REESSAI = 2 * 3600  -- sans réseau, réessayer au plus toutes les 2 heures
+local GARDER_JOURS = 5         -- un article non lu est supprimé après ce délai
+local LU = 0.9                 -- part lue à partir de laquelle un article compte comme lu
 local TEXTE_BOUTON = "Synchroniser mes découvertes"
+
+local function a_garder(fichier, ouvert)
+    if fichier == ouvert or ReadCollection:isFileInCollections(fichier, true) then
+        return true
+    end
+    local sidecar = DocSettings:findSidecarFile(fichier)
+    if sidecar then
+        local ds = DocSettings:open(fichier)
+        local annotations = ds:readSetting("annotations")
+        if (type(annotations) == "table" and #annotations > 0)
+                or next(ds:readSetting("highlight") or {}) or next(ds:readSetting("bookmarks") or {}) then
+            return true -- surlignages, notes, marque-pages : pour Jalynopédie
+        end
+        -- ouvert dans les dernières 24 h : on laisse finir la journée de lecture
+        if os.time() - (lfs.attributes(sidecar, "modification") or 0) < 24 * 3600 then
+            return true
+        end
+        local resume = ds:readSetting("summary") or {}
+        if resume.status == "complete" or (ds:readSetting("percent_finished") or 0) >= LU then
+            return false -- lu
+        end
+    end
+    return os.time() - (lfs.attributes(fichier, "modification") or os.time()) < GARDER_JOURS * 24 * 3600
+end
+
+local function nettoyer(dossier)
+    if lfs.attributes(dossier, "mode") ~= "directory" then return 0 end
+    local doc = ReaderUI.instance and ReaderUI.instance.document
+    local ouvert = doc and doc.file
+    local a_supprimer = {}
+    for nom in lfs.dir(dossier) do
+        local fichier = dossier .. "/" .. nom
+        if nom:lower():match("%.epub$") and lfs.attributes(fichier, "mode") == "file"
+                and not a_garder(fichier, ouvert) then
+            table.insert(a_supprimer, fichier)
+        end
+    end
+    local n = 0
+    for _, fichier in ipairs(a_supprimer) do
+        if FileManager:deleteFile(fichier, true) then n = n + 1 end
+    end
+    logger.info("Mes découvertes : articles supprimés", n)
+    return n
+end
 
 Dispatcher:registerAction("decouvertes_sync", {
     category = "none",
@@ -39,6 +91,7 @@ end
 
 local function synchroniser(ui, opds, OPDSBrowser, auto)
     local reglages = reglages_opds(opds)
+    nettoyer(reglages.sync_dir)
     local browser = OPDSBrowser:new{
         settings = reglages,
         servers = opds.servers,
