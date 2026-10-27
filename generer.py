@@ -111,6 +111,7 @@ GARDER = {"p", "h2", "h3", "h4", "ul", "ol", "li", "blockquote", "em", "strong",
 SUPPRIMER = {"script", "style", "figure", "img", "iframe", "noscript", "form", "nav", "aside",
              "footer", "header", "svg", "button", "video", "audio", "object", "picture", "source", "input"}
 RENOMMER = {"h1": "h2", "h5": "h4", "h6": "h4", "head": None}
+PAYANT = re.compile(rb'"isAccessibleForFree"\s*:\s*"?false', re.I)  # balise schema.org des articles payants
 CARACTERES_INTERDITS = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 
@@ -220,6 +221,9 @@ def finaliser_rss(a, regl):
     corps = ""
     try:
         page = get(a["url"]).content  # octets : trafilatura détecte lui-même l'encodage
+        if PAYANT.search(page):
+            log.info("  réservé aux abonnés : %s", a["titre"])
+            return None
         corps = trafilatura.extract(page, output_format="html", include_images=False, include_links=False,
                                     include_tables=True, include_comments=False, favor_precision=True) or ""
         if not a.get("auteur"):

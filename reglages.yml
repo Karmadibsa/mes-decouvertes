@@ -9,7 +9,7 @@ garder_jours: 5              # les articles plus anciens sont retirés du catalo
 
 # Un article est écarté si son titre, son adresse, son auteur ou son texte contient l'un de ces mots.
 exclure: [sponsorisé, sponsorisée, en partenariat avec, publi-rédactionnel, partenariats, code promo,
-          bon plan, bons plans, black friday, kamasutra, horoscope]
+          bon plan, bons plans, black friday, kamasutra, horoscope, nécrologie, je découvre à partir de]
 
 # Thèmes : « part » = pourcentage des articles en français, ou « nombre » = quantité fixe.
 # Sources possibles :
@@ -130,19 +130,23 @@ themes:
         nom: 20 Minutes
         url: https://www.20minutes.fr/feeds/rss-une.xml
 
-  # Actualité locale : remplacer « bretagne » par ta région France 3
-  # (auvergne-rhone-alpes, bourgogne-franche-comte, centre-val-de-loire, corse, grand-est,
-  #  hauts-de-france, ile-de-france, normandie, nouvelle-aquitaine, occitanie,
-  #  pays-de-la-loire, provence-alpes-cote-d-azur…), puis retirer les # devant le bloc.
-  # - nom: Près de chez moi
-  #   nombre: 2
-  #   duree_min: 1
-  #   duree_max: 7
-  #   fraicheur_jours: 2
-  #   sources:
-  #     - type: rss
-  #       nom: France 3 Régions
-  #       url: https://france3-regions.francetvinfo.fr/bretagne/rss
+  - nom: Près de chez moi
+    nombre: 2
+    duree_min: 1
+    duree_max: 7
+    fraicheur_jours: 3
+    sources:
+      - type: rss
+        nom: L'Est Républicain
+        url: https://www.estrepublicain.fr/edition-luneville/rss
+      - type: rss
+        nom: ici Sud Lorraine
+        url: https://www.francebleu.fr/rss/sud-lorraine/a-la-une.xml
+        mots_cles: &local [lunéville, lunévillois, meurthe-et-moselle, nancy, lorraine, lorrain, baccarat, saint-nicolas-de-port, dombasle, toul, pont-à-mousson, vosges, épinal, metz, moselle]
+      - type: rss
+        nom: France 3 Grand Est
+        url: https://france3-regions.francetvinfo.fr/grand-est/meurthe-et-moselle/rss
+        mots_cles: *local
 
   - nom: English
     nombre: 3
