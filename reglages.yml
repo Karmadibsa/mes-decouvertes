@@ -9,7 +9,8 @@ garder_jours: 5              # les articles plus anciens sont retirés du catalo
 
 # Un article est écarté si son titre, son adresse, son auteur ou son texte contient l'un de ces mots.
 exclure: [sponsorisé, sponsorisée, en partenariat avec, publi-rédactionnel, partenariats, code promo,
-          bon plan, bons plans, black friday, kamasutra, horoscope, nécrologie, je découvre à partir de]
+          bon plan, bons plans, black friday, kamasutra, horoscope, nécrologie, je découvre à partir de,
+          fait divers, faits divers, faits-divers]
 
 # Thèmes : « part » = pourcentage des articles en français, ou « nombre » = quantité fixe.
 # Sources possibles :
@@ -104,49 +105,6 @@ themes:
     sources:
       - type: wikipedia_anecdote
       - type: wikipedia_qualite
-
-  - nom: Actualités
-    nombre: 5
-    duree_min: 1
-    duree_max: 7
-    fraicheur_jours: 2         # seulement les articles des 2 derniers jours
-    sources:                   # la France d'abord ; les grandes infos du monde viennent de la une
-      - type: rss
-        nom: franceinfo
-        url: https://www.francetvinfo.fr/titres.rss
-      - type: rss
-        nom: franceinfo
-        url: https://www.francetvinfo.fr/france.rss
-      - type: rss
-        nom: franceinfo
-        url: https://www.francetvinfo.fr/politique.rss
-      - type: rss
-        nom: franceinfo
-        url: https://www.francetvinfo.fr/societe.rss
-      - type: rss
-        nom: franceinfo
-        url: https://www.francetvinfo.fr/economie.rss
-      - type: rss
-        nom: 20 Minutes
-        url: https://www.20minutes.fr/feeds/rss-une.xml
-
-  - nom: Près de chez moi
-    nombre: 2
-    duree_min: 1
-    duree_max: 7
-    fraicheur_jours: 3
-    sources:
-      - type: rss
-        nom: L'Est Républicain
-        url: https://www.estrepublicain.fr/edition-luneville/rss
-      - type: rss
-        nom: ici Sud Lorraine
-        url: https://www.francebleu.fr/rss/sud-lorraine/a-la-une.xml
-        mots_cles: &local [lunéville, lunévillois, meurthe-et-moselle, nancy, lorraine, lorrain, baccarat, saint-nicolas-de-port, dombasle, toul, pont-à-mousson, vosges, épinal, metz, moselle]
-      - type: rss
-        nom: France 3 Grand Est
-        url: https://france3-regions.francetvinfo.fr/grand-est/meurthe-et-moselle/rss
-        mots_cles: *local
 
   - nom: English
     nombre: 3

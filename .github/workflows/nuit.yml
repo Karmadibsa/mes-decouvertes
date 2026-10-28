@@ -1,8 +1,11 @@
 name: Découvertes du jour
 
 on:
+  # GitHub retarde souvent les tâches planifiées de plusieurs heures : on lance la veille au soir,
+  # avec un second essai dans la nuit (sans effet si le lot du jour existe déjà).
   schedule:
-    - cron: "30 3 * * *"   # 4 h 30 ou 5 h 30 à Paris selon l'heure d'été
+    - cron: "5 21 * * *"   # 22 h 05 ou 23 h 05 à Paris
+    - cron: "0 1 * * *"    # 2 h ou 3 h à Paris
   workflow_dispatch:       # bouton « Run workflow » pour lancer à la main
 
 permissions:
@@ -39,7 +42,7 @@ jobs:
         run: >
           python generer.py --sortie sortie
           --url-base https://raw.githubusercontent.com/Karmadibsa/mes-decouvertes-articles/main
-          --jour "$(TZ=Europe/Paris date +%F)"
+          --jour "$(TZ=Europe/Paris date -d '+6 hours' +%F)"
 
       - name: Publier (un seul commit, pour que le dépôt reste léger)
         working-directory: sortie
@@ -48,7 +51,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -q --orphan publication
           git add -A
-          git commit -q -m "Découvertes du $(TZ=Europe/Paris date +%F)"
+          git commit -q -m "Découvertes du $(TZ=Europe/Paris date -d '+6 hours' +%F)"
           git push -q -f origin publication:main
 
       # GitHub met en veille les tâches planifiées d'un dépôt public sans commit depuis 60 jours.

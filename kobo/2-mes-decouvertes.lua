@@ -112,7 +112,8 @@ local function synchroniser(ui, opds, OPDSBrowser, auto)
         end
     end
     UIManager:close(info)
-    if #browser.pending_syncs > 0 then
+    local nouveaux = #browser.pending_syncs > 0 -- à compter avant : le téléchargement vide la liste
+    if nouveaux then
         browser:downloadPendingSyncs()
     elseif not auto then
         UIManager:show(InfoMessage:new{ text = "Pas de nouvel article pour l'instant.", timeout = 3 })
@@ -120,7 +121,9 @@ local function synchroniser(ui, opds, OPDSBrowser, auto)
     browser.sync = false
     opds.updated = true
     opds:onFlushSettings()
-    G_reader_settings:saveSetting("decouvertes_derniere_synchro", os.date("%Y-%m-%d"))
+    if nouveaux then -- sinon (lot du jour pas encore prêt), un prochain réveil réessaiera
+        G_reader_settings:saveSetting("decouvertes_derniere_synchro", os.date("%Y-%m-%d"))
+    end
     NetworkMgr:afterWifiAction()
     if ui.file_chooser and reglages.sync_dir then
         ui.file_chooser:changeToPath(reglages.sync_dir)
